@@ -1,8 +1,13 @@
 import numpy as np
-from agents import common
+
+
+from agents.common import GameState
+
+
 
 
 available_moves = np.arange(7)
+
 
 
 def minValue (

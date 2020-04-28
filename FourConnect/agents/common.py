@@ -58,6 +58,7 @@ def pretty_print_board(board: np.ndarray):
 
 
 
+"""
 def string_to_board(np_board: str) -> np.ndarray:
 
     # Make a dictionary that converts keys into their board representations
@@ -69,6 +70,7 @@ def string_to_board(np_board: str) -> np.ndarray:
 
     return np.array(list(filter(lambda key: board_keys[board_vals.index(key)], np_board))).reshape(6,7)
 
+"""
 
 def apply_player_action(
         board: np.ndarray, action: PlayerAction, player: BoardPiece, copy: bool = False
@@ -188,8 +190,6 @@ def check_end_state(
         return GameState.IS_DRAW
 
 res = pretty_print_board(initialize_game_state())
-
-print(string_to_board(res))
 
 
 

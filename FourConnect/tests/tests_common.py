@@ -1,6 +1,6 @@
 import numpy as np
 
-from agents.common import BoardPiece, noPlayer
+from agents.common import BoardPiece, PlayerAction
 
 #Tests for Initialization:
 

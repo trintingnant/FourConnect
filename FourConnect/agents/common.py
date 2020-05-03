@@ -1,22 +1,35 @@
 import numpy as np
+import re
 
 import warnings
 
 from enum import Enum
 from typing import Optional
+from typing import Callable, Tuple
 
 BoardPiece = np.int8
 
 noPlayer = BoardPiece(0)
-Player1 = BoardPiece(1)
-Player2 = BoardPiece(2)
+PLAYER1 = BoardPiece(1)
+PLAYER2 = BoardPiece(2)
 
 PlayerAction = np.int8
+
+class SavedState:
+    pass
+
+GenMove = Callable[
+    [np.ndarray, BoardPiece, Optional[SavedState]],  # Arguments for the generate_move function
+    Tuple[PlayerAction, Optional[SavedState]]  # Return type of the generate_move function
+]
 
 class GameState(Enum):
     IS_WIN = 1
     IS_DRAW = -1
     STILL_PLAYING = 0
+
+class SavedState:
+    pass
 
 def initialize_game_state() -> np.ndarray:
     """
@@ -44,7 +57,7 @@ def pretty_print_board(board: np.ndarray):
 
     #Make a dictionary that converts keys into their board represenations:
 
-    board_rep = {str(Player1): 'X', str(Player2): 'O', str(noPlayer): ' '}
+    board_rep = {str(PLAYER1): 'X', str(PLAYER2): 'O', str(noPlayer): ' '}
 
     #Draw the board:
 
@@ -52,25 +65,27 @@ def pretty_print_board(board: np.ndarray):
 
     ppBoard = bottomtop + ppBoard + sepa + bottomtop + lrow
 
+    print(ppBoard)
+
     return ppBoard
 
-    pp
 
-
-
-"""
 def string_to_board(np_board: str) -> np.ndarray:
 
+    # Weed out all spurious symbols with pattern matching:
+
+    board = re.sub("[0-9]|=|\t|\n|\|",'', np_board)
+
     # Make a dictionary that converts keys into their board representations
-    # (I think, just in this case, using this twice is better than making it global).
 
-    board_rep = {str(Player1): 'X', str(Player2): 'O', str(noPlayer): ' '}
+    board_rep = {PLAYER1: 'X', PLAYER2: 'O', noPlayer: ' '}
 
-    board_vals, board_keys = list(board_rep.keys()), np.array(list(board_rep.values()))
+    board_vals, board_keys = list(board_rep.keys()), list(board_rep.values())
 
-    return np.array(list(filter(lambda key: board_keys[board_vals.index(key)], np_board))).reshape(6,7)
+    result = np.array(list(map(lambda key: board_vals[board_keys.index(key)], board))).reshape(6,7)
 
-"""
+    return result
+
 
 def apply_player_action(
         board: np.ndarray, action: PlayerAction, player: BoardPiece, copy: bool = False
@@ -89,7 +104,7 @@ def apply_player_action(
 
     if board[-1, action] != noPlayer:
 
-        raise Exception ("column already full")
+        raise Exception ("Column already full")
 
         return board
 
@@ -98,7 +113,6 @@ def apply_player_action(
     board[bottom, action] = player
 
     return board
-
 
 
 def connected_four(
@@ -131,7 +145,7 @@ def connected_four(
 
 
 def boardChecker(
-        board : np.ndarray, player: BoardPiece, number: int
+        board : np.ndarray, player: BoardPiece, number = 4
 ) -> bool:
 
     """
@@ -189,7 +203,8 @@ def check_end_state(
 
         return GameState.IS_DRAW
 
-res = pretty_print_board(initialize_game_state())
+
+
 
 
 

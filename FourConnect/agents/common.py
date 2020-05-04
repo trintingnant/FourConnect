@@ -46,6 +46,9 @@ def pretty_print_board(board: np.ndarray):
     :param board: the board to be printed
     :return: a string representation of the board
     """
+
+    flipBoard = np.flipud(board)
+
     # Separator for printed rows:
     sepa = ('\t' + '|' + '\n')
 
@@ -61,7 +64,7 @@ def pretty_print_board(board: np.ndarray):
 
     #Draw the board:
 
-    ppBoard = (sepa.join(['\t'.join (['|'] + [board_rep[str(int(cell))] for cell in row]) for row in board]))
+    ppBoard = (sepa.join(['\t'.join (['|'] + [board_rep[str(int(cell))] for cell in row]) for row in flipBoard]))
 
     ppBoard = bottomtop + ppBoard + sepa + bottomtop + lrow
 
@@ -145,7 +148,7 @@ def connected_four(
 
 
 def boardChecker(
-        board : np.ndarray, player: BoardPiece, number = 4
+        board : np.ndarray, player: BoardPiece, number=4
 ) -> bool:
 
     """
@@ -176,7 +179,7 @@ def boardChecker(
 
                 counter += 1 if board[i][j] == player else -counter
 
-    return False
+    return result
 
 def check_end_state(
         board: np.ndarray, player: BoardPiece, last_action: Optional[PlayerAction] = None,
@@ -202,10 +205,6 @@ def check_end_state(
     else:
 
         return GameState.IS_DRAW
-
-
-
-
 
 
 

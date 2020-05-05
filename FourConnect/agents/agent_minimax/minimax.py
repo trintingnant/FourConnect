@@ -1,6 +1,6 @@
 import numpy as np
 
-from agents.common import BoardPiece, apply_player_action, check_end_state, GameState
+from agents.common import BoardPiece, noPlayer, apply_player_action, check_end_state, GameState
 
 MAX_DEPTH = 10
 
@@ -81,7 +81,7 @@ def maxValue(
 
     else:
 
-        possible_moves = np.
+        possible_moves = np.where(board[0] == noPlayer)
         minScore = -np.inf
 
         for move in possible_moves:

@@ -1,6 +1,7 @@
 import numpy as np
 from typing import Optional, Callable
 from agents.common import PlayerAction, BoardPiece, SavedState, GenMove
+from agents.agent_random import generate_move
 
 def user_move(board: np.ndarray, _player: BoardPiece, saved_state: Optional[SavedState]):
     action = PlayerAction(-1)
@@ -13,7 +14,7 @@ def user_move(board: np.ndarray, _player: BoardPiece, saved_state: Optional[Save
 
 
 def human_vs_agent(
-    generate_move_1: GenMove,
+    generate_move_1: GenMove = GenMove,
     generate_move_2: GenMove = user_move,
     player_1: str = "Player 1",
     player_2: str = "Player 2",
@@ -66,5 +67,5 @@ def human_vs_agent(
 
 if __name__ == "__main__":
 
-    human_vs_agent(user_move)
+    human_vs_agent(generate_move)
 

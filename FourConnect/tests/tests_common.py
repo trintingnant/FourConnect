@@ -1,6 +1,6 @@
 import numpy as np
 
-from agents.common import BoardPiece, PlayerAction, GameState, PLAYER1, PLAYER2
+from agents.common import BoardPiece, PlayerAction, GameState, PLAYER1, PLAYER2, noPlayer
 
 player = PLAYER1
 
@@ -50,17 +50,31 @@ def test_check_end_state():
 
     from agents.common import check_end_state
 
-    board = np.zeros((6,7))
+    board= np.zeros((6,7))
+    board2 = board.copy()
     board[:,3] = np.ones(6)
+    board2[:4, 3] = np.zeros(4)
 
     assert check_end_state(board, player) == GameState.IS_WIN
     assert check_end_state(board.T, player) == GameState.IS_WIN
     assert check_end_state(board, PLAYER2) != GameState.IS_WIN
+    assert check_end_state(board2, player) == GameState.STILL_PLAYING
+    assert check_end_state(board, PLAYER2) == GameState.STILL_PLAYING
+
+def test_string_to_board():
+
+    from agents.common import string_to_board, pretty_print_board
+
+    board = np.random.choice([PLAYER2, PLAYER2, noPlayer], (6,7))
+
+    assert np.array_equal(string_to_board(pretty_print_board(board)), board)
+
 
 print(test_initialize_game_state(),
       test_connected_four(),
       test_check_end_state(),
-      test_apply_player_action())
+      test_apply_player_action(),
+      test_string_to_board())
 
 
 

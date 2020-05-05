@@ -1,4 +1,6 @@
-from agents.common import BoardPiece, PlayerAction, SavedState
+import numpy as np
+from typing import Tuple, Optional
+from agents.common import BoardPiece, noPlayer, PlayerAction, SavedState
 
 def generate_move_random(
     board: np.ndarray, player: BoardPiece, saved_state: Optional[SavedState]
@@ -12,8 +14,5 @@ def generate_move_random(
 
     if board[-1, action] == noPlayer:
 
-        return action, saved_state
-
-    else generate_move_random(board, player, saved_state)
-
-
+        return action, saved_state if board[-1, action] == noPlayer \
+                else generate_move_random(board, player, saved_state)

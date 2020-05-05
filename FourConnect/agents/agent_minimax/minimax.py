@@ -1,6 +1,9 @@
 import numpy as np
 
-from agents.common import *
+from agents.common import BoardPiece, apply_player_action, check_end_state, GameState
+
+MAX_DEPTH = 10
+
 
 def minValue(
         board: np.ndarray,
@@ -8,7 +11,7 @@ def minValue(
         alpha: float,
         beta: float,
         depth: int
-        ) -> GameState:
+        ) -> int:
         """
         :param board: The game board
         :param state: The game state
@@ -24,7 +27,7 @@ def minValue(
 
         state = check_end_state(board, player)
 
-        if depth == 0 or state != GameState.STILL_PLAYING:
+        if depth == MAX_DEPTH or state != GameState.STILL_PLAYING:
             return state
 
         else:
@@ -35,7 +38,8 @@ def minValue(
             for move in possible_moves:
 
                 new_board = apply_player_action(board, move, player)
-                score = maxValue(new_board, player, alpha, beta, depth-1)
+                new_player = (player + 1) % 2
+                score = maxValue(new_board, new_player, alpha, beta, depth-1)
 
                 if score < minScore:
                     minScore = score
@@ -55,7 +59,7 @@ def maxValue(
         alpha: float,
         beta: float,
         depth: int
-) -> GameState:
+) -> int:
     """
     :param board: The game board
     :param state: The game state
@@ -67,33 +71,61 @@ def maxValue(
     completely at all shallower depths (iterative deepening search)
     :return: A Gamestate corresponding to the best outcome for the
     opponent player under optimal play
+    TODO: Implement IDDFS instead of DFS with cut-off
     """
 
     state = check_end_state(board, player)
 
-    if depth == 0 or state != GameState.STILL_PLAYING:
+    if depth == MAX_DEPTH or state != GameState.STILL_PLAYING:
         return state
 
     else:
 
-        possible_moves = np.arange(7)
+        possible_moves =
         minScore = -np.inf
 
         for move in possible_moves:
 
             new_board = apply_player_action(board, move, player)
-            score = minValue(new_board, alpha, beta, )
+            new_player = (player + 1) % 2
+            score = minValue(new_board, new_player, alpha, beta, depth-1)
 
-            if score > m:
-                minScore = score
+            if score > maxScore:
+                maxScore = score
 
-            if minScore <= alpha:
-                return minScore
+            if maxScore > beta:
+                return maxScore
 
             else:
-                beta = np.min(beta, minScore)
+                alpha = np.max(alpha, maxScore)
 
         return minScore
+
+
+    def alphaBeta(
+            board: np.array,
+            player: BoardPiece,
+            depth = MAX_DEPTH
+    ) -> int:
+
+        result = minValue(board, player, np.NINF, np.inf, depth=MAX_DEPTH)
+
+        return result
+
+
+
+
+    def generate_move_alphaBeta(np.board):
+
+        """
+        Generates the next move on the basis of traversal fo game-tree
+        to MAX_DEPTH
+
+        :return:
+        TODO: Make this an iterative deepening search instead of DFS with cut-off
+        """
+
+        raise NotImplemented
 
 
 

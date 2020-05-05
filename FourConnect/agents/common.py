@@ -87,7 +87,7 @@ def string_to_board(np_board: str) -> np.ndarray:
 
     result = np.array(list(map(lambda key: board_vals[board_keys.index(key)], board))).reshape(6,7)
 
-    return result
+    return np.flipud(result)
 
 
 def apply_player_action(

@@ -81,7 +81,7 @@ def maxValue(
 
     else:
 
-        possible_moves =
+        possible_moves = np.
         minScore = -np.inf
 
         for move in possible_moves:
@@ -115,7 +115,7 @@ def maxValue(
 
 
 
-    def generate_move_alphaBeta(np.board):
+    def generate_move_alphaBeta(board: np.array):
 
         """
         Generates the next move on the basis of traversal fo game-tree

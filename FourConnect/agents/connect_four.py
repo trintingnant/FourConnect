@@ -18,6 +18,7 @@ from typing import Optional, Tuple
 from agents.common import initialize_game_state, BoardPiece
 from agents.common import PlayerAction, connectN, players, PLAYER1, PLAYER2, noPlayer
 
+
 @njit()
 def connected_four_iter(
     board: np.ndarray, player: BoardPiece, _last_action: Optional[PlayerAction] = None
@@ -127,10 +128,12 @@ def estimate_running_times(numIters: int=10, numBoardIters: int=int(10e4)) -> Tu
 
 
 #Iterative procedure far superior to flipping procedure:
+'''
 runTimeEst = estimate_running_times()
 
 print(f"Python iteration-based: {runTimeEst[0]: .1f} us per call")
 print(f"Python flip-based: {runTimeEst[1]: .1f} us per call")
+'''
 
 
 

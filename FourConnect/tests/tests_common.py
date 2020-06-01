@@ -2,10 +2,6 @@ import numpy as np
 import unittest
 import sys, os
 
-from agents.common import BoardPiece, PlayerAction, GameState, PLAYER1 as player, PLAYER2, noPlayer
-from agents.common import initialize_game_state
-from errors.errors import ColumnError, BoardError
-
 #Block annoying prints from the pprint function:
 def blockPrinting():
     sys.stdout = open(os.devnull, 'w')
@@ -15,13 +11,15 @@ def unblockPrinting():
 
 blockPrinting()
 
+from agents.common import BoardPiece, PlayerAction, GameState, PLAYER1 as player, PLAYER2, noPlayer
+from agents.common import initialize_game_state
+from errors.errors import ColumnError, BoardError
 
 class testCommon(unittest.TestCase):
 
     def testApplyPlayerAction(self):
 
         from agents.common import apply_player_action
-
 
         move = np.random.randint(7)
         board = apply_player_action(initialize_game_state(), move, player)
@@ -61,6 +59,11 @@ class testCommon(unittest.TestCase):
         #Initilize two different boards:
 
         board = np.zeros((6, 7))
+        board[0,0] = 1*player
+
+        self.assertEqual(check_end_state(board, player), GameState.STILL_PLAYING)
+        self.assertEqual(check_end_state(board, PLAYER2), GameState.STILL_PLAYING)
+
         board[:, 3] = np.ones(6)*player #is win for player
         board2 = board.copy()
         board2[:4, 3] = np.zeros(4) #player is no longer winning
@@ -76,25 +79,32 @@ class testCommon(unittest.TestCase):
 
         board2[:4,:4] = np.eye(4)*PLAYER2 #is win for player2
 
-        self.assertEqual(check_end_state(board2,PLAYER2), GameState.IS_WIN)
+        self.assertEqual(check_end_state(board2, PLAYER2), GameState.IS_WIN)
 
     def testConnectedFour(self):
 
         from agents.common import connected_four
 
         board = np.zeros((6, 7))
+        board[0,0] = 1*player
         board2 = board.copy()
+
+        self.assertFalse(connected_four(board, player))
+        self.assertFalse(connected_four(board, PLAYER2))
+
+        #Generate new board:
         board[:, 1] = np.ones(6)*player
 
         self.assertTrue(connected_four(board, player))
         self.assertFalse(connected_four(board2, player))
         self.assertTrue(connected_four(board.T, player))
 
+        #Generate new board:
         board2[2:6,3:7] = np.eye(4)*PLAYER2
-        board2[1,:] = np.array([1,1,1,0,1,1,1])*player
+        board2[5,:] = np.array([1,1,1,0,1,1,1])*player
 
         self.assertFalse(connected_four(board2, player))
-        self.assertFalse(connected_four(board2, PLAYER2)) #Top corner piece is now player
+        self.assertFalse(connected_four(board2, player)) #Top corner piece is now player
 
 
     def testPrettyPrintBoard(self):

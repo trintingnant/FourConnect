@@ -1,8 +1,13 @@
 import numpy as np
+from collections import OrderedDict
 
-from agents.common import BoardPiece, noPlayer, apply_player_action, check_end_state, GameState
+from agents.common import BoardPiece, GameState, PLAYER1, PLAYER2, noPlayer
+from agents.common import check_end_state, apply_player_action, initialize_game_state
 
-MAX_DEPTH = 10
+
+MAX_DEPTH: int = 10
+TIME_THRESHOLD: int = 2000
+timeOut: bool
 
 
 def minValue(
@@ -11,7 +16,7 @@ def minValue(
         alpha: float,
         beta: float,
         depth: int
-        ) -> int:
+) -> float:
         """
         :param board: The game board
         :param state: The game state
@@ -31,15 +36,14 @@ def minValue(
             return state
 
         else:
-
-            possible_moves = np.arange(7)
-            minScore = -np.inf
+            possible_moves = np.where(board[5] == noPlayer)#top row still empty
+            minScore = np.inf
 
             for move in possible_moves:
 
                 new_board = apply_player_action(board, move, player)
                 new_player = (player + 1) % 2
-                score = maxValue(new_board, new_player, alpha, beta, depth-1)
+                score = maxValue(new_board, new_player, alpha, beta, depth+1)
 
                 if score < minScore:
                     minScore = score
@@ -59,7 +63,7 @@ def maxValue(
         alpha: float,
         beta: float,
         depth: int
-) -> int:
+) -> float:
     """
     :param board: The game board
     :param state: The game state
@@ -71,7 +75,6 @@ def maxValue(
     completely at all shallower depths (iterative deepening search)
     :return: A Gamestate corresponding to the best outcome for the
     opponent player under optimal play
-    TODO: Implement IDDFS instead of DFS with cut-off
     """
 
     state = check_end_state(board, player)
@@ -81,14 +84,14 @@ def maxValue(
 
     else:
 
-        possible_moves = np.where(board[0] == noPlayer)
-        minScore = -np.inf
+        possible_moves = np.where(board[5] == noPlayer) #top row still empty
+        maxScore = np.NINF
 
         for move in possible_moves:
 
             new_board = apply_player_action(board, move, player)
             new_player = (player + 1) % 2
-            score = minValue(new_board, new_player, alpha, beta, depth-1)
+            score = minValue(new_board, new_player, alpha, beta, depth+1)
 
             if score > maxScore:
                 maxScore = score
@@ -99,26 +102,104 @@ def maxValue(
             else:
                 alpha = np.max(alpha, maxScore)
 
-        return minScore
+        return maxScore
 
 
-    def alphaBeta(
-            board: np.array,
-            player: BoardPiece,
-            depth = MAX_DEPTH
-    ) -> int:
+def alphaBeta(board: np.ndarray, player: BoardPiece, depth: int
+) -> float:
+    """
+    Applies alphaBeta pruning to the minimax search from above
+    :param board: the board
+    :param player: the player
+    :return: the score
+    """
+    #Call minValue for the current player:
+    result = minValue(board, player, np.NINF, np.inf, depth=depth)
+    return result
 
-        result = minValue(board, player, np.NINF, np.inf, depth=MAX_DEPTH)
+def iterativeDeepingSearch(board: np.ndarray, player: BoardPiece
+)-> np.ndarray:
+    """
+    :param board: the board
+    :param player: the player to move
+    :param maxDepth: the maximal depth to which to search (temporary measure)
+    :return: a list of moves with the best score
+    """
 
-        return result
+    iter = MAX_DEPTH #sets cut-off depth for DFS: incrementally decreasing
+    score, bestScore = 0, np.NINF
+
+    possible_moves = np.where(board[5] == noPlayer)
+    #Moves stored in OrderedDict: keys := score, vals := list(moves)
+    #this will help (later on) with storing some of the suboptimal moves
+    #and help circumvent some horizon problems
+    bestMoves = OrderedDict()
+    new_bestMoves = OrderedDict()
+
+    #Generate list of best moves:
+    #TODO: generate list of best and second (nth?) best moves
+    #TODO: then draw move from a skewed probability distribution
+    #TODO: add time-limit related while-loop wrap
+
+    #Generate a list of the best moves for iteration to next level:
+
+    while iter >= 0:
+
+        for move in possible_moves:
+
+            new_state = apply_player_action(board, move, player)
+            new_player = (player + 1) % 2
+            score = alphaBeta(new_state, new_player, iter)
+
+            if score > bestScore:
+                bestScore = score
+                new_bestMoves.clear()
+                new_bestMoves[bestScore] = [move]
+
+            #store all moves with the same score:
+            elif score == bestScore:
+                new_bestMoves[bestScore].append(move)
+
+        #Check old and new bestScores are the same:
+        if bestMoves != OrderedDict() and list(bestMoves.keys())[0] == list(new_bestMoves.keys())[0]:
+
+            #Merge moves with the same score:
+            bestMoves[list(bestMoves.keys())[0]] + new_bestMoves[list(new_bestMoves.keys())[0]]
+
+        else:
+            bestMoves = new_bestMoves
+
+        new_bestMoves.clear()
+        iter -= 1
+        bestScore = np.NINF
+
+    #When under time constraint: check how deep you can go
+    print("Iteration: {}".format(iter))
+    return bestMoves
+
+print(iterativeDeepingSearch(initialize_game_state(), PLAYER1))
 
 
 
 
-    def generate_move_alphaBeta(board: np.array):
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def generate_move_alphaBeta(board: np.array):
 
         """
-        Generates the next move on the basis of traversal fo game-tree
+        Generates the next move on the basis of traversal of game-tree
         to MAX_DEPTH
 
         :return:
@@ -127,7 +208,7 @@ def maxValue(
 
         raise NotImplemented
 
-
+print(minValue)
 
 
 

@@ -4,16 +4,19 @@ import re
 import warnings
 
 from enum import Enum
-from typing import Optional
-from typing import Callable, Tuple
+from typing import Optional, Callable, Tuple
+from errors.errors import ColumnError, BoardError
+import timeit
 
 BoardPiece = np.int8
 
 noPlayer = BoardPiece(0)
 PLAYER1 = BoardPiece(1)
 PLAYER2 = BoardPiece(2)
+players = np.array([PLAYER1, PLAYER2, noPlayer])
 
 PlayerAction = np.int8
+connectN: np.int8 = 4
 
 class SavedState:
     pass
@@ -36,8 +39,7 @@ def initialize_game_state() -> np.ndarray:
     Intializes the board
     :return: np.ndarray with dimension : 6 x 7
     """
-
-    return np.zeros((6,7), dtype=BoardPiece)
+    return np.zeros((6, 7), dtype=BoardPiece)
 
 def pretty_print_board(board: np.ndarray):
 
@@ -47,7 +49,7 @@ def pretty_print_board(board: np.ndarray):
     :return: a string representation of the board
     """
 
-    flipBoard = np.flipud(board)
+    flipBoard = np.flipud(board) #correct orientation
 
     # Separator for printed rows:
     sepa = ('\t' + '|' + '\n')
@@ -59,13 +61,10 @@ def pretty_print_board(board: np.ndarray):
     lrow = sepa.join(['\t'.join(['|'] + [str(i) for i in range(7)])]) + sepa
 
     #Make a dictionary that converts keys into their board represenations:
-
     board_rep = {str(PLAYER1): 'X', str(PLAYER2): 'O', str(noPlayer): ' '}
 
     #Draw the board:
-
     ppBoard = (sepa.join(['\t'.join (['|'] + [board_rep[str(int(cell))] for cell in row]) for row in flipBoard]))
-
     ppBoard = bottomtop + ppBoard + sepa + bottomtop + lrow
 
     print(ppBoard)
@@ -74,18 +73,23 @@ def pretty_print_board(board: np.ndarray):
 
 
 def string_to_board(np_board: str) -> np.ndarray:
+    """
+    Takes a string representation of a board as input and return the respective array
+    :param np_board: the string representation of the board
+    :return: the board
+    """
 
     # Weed out all spurious symbols with pattern matching:
-
     board = re.sub("[0-9]|=|\t|\n|\|",'', np_board)
 
     # Make a dictionary that converts keys into their board representations
-
     board_rep = {PLAYER1: 'X', PLAYER2: 'O', noPlayer: ' '}
 
+    #Get keys & values:
     board_vals, board_keys = list(board_rep.keys()), list(board_rep.values())
 
-    result = np.array(list(map(lambda key: board_vals[board_keys.index(key)], board))).reshape(6,7)
+    #Decode string:
+    result = np.array(list(map(lambda key: board_vals[board_keys.index(key)], board))).reshape(6, 7)
 
     return np.flipud(result)
 
@@ -103,16 +107,20 @@ def apply_player_action(
     :return: a new board
     """
 
+
+    #Raise exception if action is not a column:
+
+    if not action in range(board.shape[1]):
+        raise BoardError("Not a board column")
+        return board
+
     #Raise exception if row is full:
 
     if board[-1, action] != noPlayer:
-
-        raise Exception ("Column already full")
-
+        raise ColumnError("Column already full")
         return board
 
     bottom = np.min(np.where(board[:, action] == noPlayer))
-
     board[bottom, action] = player
 
     return board
@@ -122,7 +130,8 @@ def connected_four(
         board: np.ndarray, player: BoardPiece, last_action: Optional[PlayerAction] = None,
 ) -> GameState:
 
-    #TODO: Improve the way the connected pieces are found -> bitmap?
+    import agents.connect_four as connect_four
+
     """
     Returns whether the game is a win for the current player
     :param board: the board before last_action
@@ -130,56 +139,9 @@ def connected_four(
     :param last_action: the last_action
     :return:
     """
+    #TODO: Improve the way the connected pieces are found -> bitmap?
 
-    #Extract all possible diagonals from the board:
-
-    diags = lambda array: np.array([np.diag(arr) for arr in [array[:,i:6] for i in np.arange(0, 6, 1)]]\
-                                   + [np.diag(arr) for arr in [array.T[:,0:i] for i in np.arange(6, 0, -1)]]\
-                                   + [np.diag(arr) for arr in [np.flipud(array)[:, i:6] for i in np.arange(0, 6, 1)]]\
-                                   + [np.diag(arr) for arr in [np.flipud(array).T[:, 0:i] for i in np.arange(6, 0, -1)]])
-
-    boards = [board, board.T, diags(board)]
-
-    #Apply boardChecker function to rows, columns and diagonals:
-
-    func = lambda brd: boardChecker(brd, player, 4)
-
-    return func(board) or func(board.T) or func(diags(board))
-
-
-def boardChecker(
-        board : np.ndarray, player: BoardPiece, number=4
-) -> bool:
-
-    """
-    Helper function for connected_four: checks a row for n-time consective
-    occurence of the same item (i.e. player)
-
-    :param row: the board
-    :param player: the player
-    :param number: the number of consecutive occurences to be checked
-    :return: Does the board have "number" consecutive stones by one player
-    """
-
-    result = False
-
-    for i in range(len(board)):
-
-        counter = 0
-
-        for j in range(len(board[i])):
-
-            if counter == number:
-
-                result = True
-
-                break
-
-            else:
-
-                counter += 1 if board[i][j] == player else -counter
-
-    return result
+    return connect_four.connected_four_iter(board, player, last_action)
 
 def check_end_state(
         board: np.ndarray, player: BoardPiece, last_action: Optional[PlayerAction] = None,
@@ -195,16 +157,15 @@ def check_end_state(
     """
 
     if connected_four(board, player):
-
         return GameState.IS_WIN
 
     elif np.size(board[board == 0]) != 0:
-
         return GameState.STILL_PLAYING
 
     else:
+        return GameState.IS_DRAW #no free cells remaining
 
-        return GameState.IS_DRAW
+
 
 
 

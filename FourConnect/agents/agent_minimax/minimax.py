@@ -71,6 +71,8 @@ def minValue(
                 if minScore <= alpha:
                     return minScore
 
+                #TODO: Random pruning: with small probability, prune anyway
+
                 else:
                     beta = np.min((beta, minScore))
 
@@ -131,6 +133,8 @@ def maxValue(
             if maxScore >= beta:
                 return maxScore
 
+            #TODO: Random pruning: with small probability, prune anyway
+
             else:
                 alpha = np.max((alpha, maxScore))
 
@@ -183,6 +187,13 @@ def iterativeDeepingSearch(board: np.ndarray, player: BoardPiece
     #TODO: then draw move from a skewed (e.g. exponential) probability distribution
     #TODO: add time-limit related while-loop wrap
 
+    #Early in the game: play moves in the center columns:
+
+    if 42 - np.count_nonzero(board) < 3:
+        score, moves = [], [[3]]
+        return score, moves
+
+    #if np.count_nonzero(board) in range(2)
     #Generate a list of the best moves for iteration to next level:
 
     while iter > 0:
@@ -246,9 +257,10 @@ def generate_move_alphaBeta(board: np.array, player: BoardPiece, saved_state: Op
         :param player: the player
         :return: an action
         """
-        score, *action = iterativeDeepingSearch(board, player)
+        scores, actions = iterativeDeepingSearch(board, player)
+        print(actions)
         #Randomly select one of the moves:
-        move = np.random.choice(action[0][0]) #that's pretty ugly
+        move = np.random.choice(actions[0]) #that's pretty ugly
         return move, saved_state
 
 

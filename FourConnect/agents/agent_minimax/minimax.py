@@ -21,7 +21,8 @@ def minValue(
         alpha: float,
         beta: float,
         depth: int,
-        lastMove: Optional[PlayerAction]
+        lastMove: Optional[PlayerAction],
+        movesPlayed: OrderedDict()
 ) -> float:
         """
         :param board: The game board
@@ -39,22 +40,30 @@ def minValue(
         state = check_end_state(board, player)
         tempBoard = board.copy() #somehow this was necessary
 
+
         if state != GameState.STILL_PLAYING:
-            return state.value
+            return -state.value
 
         elif depth == MAX_DEPTH:
-            return evaluateGame(board, player, lastMove)
+            return -evaluateGame(board, player, lastMove)
 
         else:
-            possible_moves = np.where(board[5] == noPlayer) #top row still empty
+            #Determine the order in which moves are explored
+            #Moves that are played often are explored first
+            sorted(movesPlayed.items(), key=lambda item: item[1])
+            possible_moves = np.array(list(movesPlayed.keys()))
+            possible_moves = possible_moves[board[5] == noPlayer] #top row still empty
             minScore = np.inf
 
             for moveI, move in np.ndenumerate(possible_moves):
 
+                movesPlayed[lastMove] += 1
+
                 new_board = apply_player_action(tempBoard, move, player)
                 tempBoard = board.copy() #resetting tempBoard
                 new_player = player % 2 + 1
-                score = maxValue(new_board, new_player, alpha, beta, depth+1, lastMove=None)
+                score = maxValue(new_board, new_player, alpha, beta, depth+1, \
+                                 lastMove=move, movesPlayed=movesPlayed)
 
                 if score < minScore:
                     minScore = score
@@ -74,7 +83,8 @@ def maxValue(
         alpha: float,
         beta: float,
         depth: int,
-        lastMove: Optional[PlayerAction]
+        lastMove: Optional[PlayerAction],
+        movesPlayed: OrderedDict
 ) -> float:
     """
     :param board: The game board
@@ -99,16 +109,21 @@ def maxValue(
         return evaluateGame(board, player, lastMove)
 
     else:
-
-        possible_moves = np.where(board[5] == noPlayer) #top row still empty
+        sorted(movesPlayed.items(), key=lambda item: item[1])
+        possible_moves = np.array(list(movesPlayed.keys()))
+        possible_moves = possible_moves[board[5] == noPlayer]  # top row still empty
         maxScore = np.NINF
 
         for moveI, move in np.ndenumerate(possible_moves):
 
+            movesPlayed[lastMove] += 1
+            lastMove = move
+
             new_board = apply_player_action(tempBoard, move, player)
             tempBoard = board.copy()
             new_player = player % 2 + 1
-            score = minValue(new_board, new_player, alpha, beta, depth+1, lastMove=None)
+            score = minValue(new_board, new_player, alpha, beta, depth+1, \
+                             lastMove=move, movesPlayed=movesPlayed)
 
             if score > maxScore:
                 maxScore = score
@@ -122,7 +137,7 @@ def maxValue(
         return maxScore
 
 
-def alphaBeta(board: np.ndarray, player: BoardPiece, depth: int
+def alphaBeta(board: np.ndarray, player: BoardPiece, depth: int, lastMove: Optional[PlayerAction]
 ) -> float:
     """
     Applies alphaBeta pruning to the minimax search from above
@@ -130,9 +145,12 @@ def alphaBeta(board: np.ndarray, player: BoardPiece, depth: int
     :param player: the player
     :return: the score
     """
+    #Passes OrderedDict with moves that have been played for ordering search tree
+    movesPlayed = OrderedDict([(i,0) for i in np.arange(7)])
     #Call minValue for the current player: minValue because alphaBeta
     #will be called in the iterativeDeepning search for the minimizing player
-    result = minValue(board, player, alpha=np.NINF, beta=np.inf, depth=depth, lastMove=None)
+    result = minValue(board, player, alpha=np.NINF, beta=np.inf, depth=depth,\
+                      lastMove=lastMove, movesPlayed=movesPlayed)
     return result
 
 def iterativeDeepingSearch(board: np.ndarray, player: BoardPiece
@@ -173,12 +191,14 @@ def iterativeDeepingSearch(board: np.ndarray, player: BoardPiece
 
         for moveI, move in np.ndenumerate(possible_moves):
 
+            last_move = move
+
             bestScore = tempBestScore
 
             new_board = apply_player_action(tempBoard, move, player)
             tempBoard = board.copy()
             new_player = (player%2)+1
-            score = alphaBeta(new_board, new_player, iter)
+            score = alphaBeta(new_board, new_player, iter, last_move)
 
 
             if score > bestScore:

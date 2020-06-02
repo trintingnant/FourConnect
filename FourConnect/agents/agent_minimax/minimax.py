@@ -1,13 +1,18 @@
 import numpy as np
 from collections import OrderedDict
+from typing import Tuple, Optional
 
-from agents.common import BoardPiece, GameState, PLAYER1, PLAYER2, noPlayer
+
+from agents.common import BoardPiece, GameState, PLAYER1, PLAYER2, noPlayer, SavedState, PlayerAction
 from agents.common import check_end_state, apply_player_action, initialize_game_state, pretty_print_board
+from agents.heuristic import evaluateGame
 
 
-MAX_DEPTH: int = 10
+MAX_DEPTH: int = 6
 TIME_THRESHOLD: int = 2000
 timeOut: bool
+
+#TODO: Add automatic evaluation of GameState for runtims exceeding time limit
 
 
 def minValue(
@@ -15,7 +20,8 @@ def minValue(
         player: BoardPiece,
         alpha: float,
         beta: float,
-        depth: int
+        depth: int,
+        lastMove: Optional[PlayerAction]
 ) -> float:
         """
         :param board: The game board
@@ -33,9 +39,11 @@ def minValue(
         state = check_end_state(board, player)
         tempBoard = board.copy() #somehow this was necessary
 
-
-        if depth == MAX_DEPTH or state != GameState.STILL_PLAYING:
+        if state != GameState.STILL_PLAYING:
             return state.value
+
+        elif depth == MAX_DEPTH:
+            return evaluateGame(board, player, lastMove)
 
         else:
             possible_moves = np.where(board[5] == noPlayer) #top row still empty
@@ -45,8 +53,8 @@ def minValue(
 
                 new_board = apply_player_action(tempBoard, move, player)
                 tempBoard = board.copy() #resetting tempBoard
-                new_player = (player%2)+1
-                score = maxValue(new_board, new_player, alpha, beta, depth+1)
+                new_player = player % 2 + 1
+                score = maxValue(new_board, new_player, alpha, beta, depth+1, lastMove=None)
 
                 if score < minScore:
                     minScore = score
@@ -65,7 +73,8 @@ def maxValue(
         player: BoardPiece,
         alpha: float,
         beta: float,
-        depth: int
+        depth: int,
+        lastMove: Optional[PlayerAction]
 ) -> float:
     """
     :param board: The game board
@@ -83,11 +92,11 @@ def maxValue(
     state = check_end_state(board, player)
     tempBoard = board.copy()
 
-    if depth == MAX_DEPTH:
+    if state != GameState.STILL_PLAYING:
         return state.value
 
-    elif state != GameState.STILL_PLAYING:
-        return state.value
+    elif depth == MAX_DEPTH:
+        return evaluateGame(board, player, lastMove)
 
     else:
 
@@ -98,8 +107,8 @@ def maxValue(
 
             new_board = apply_player_action(tempBoard, move, player)
             tempBoard = board.copy()
-            new_player = (player%2)+1
-            score = minValue(new_board, new_player, alpha, beta, depth+1)
+            new_player = player % 2 + 1
+            score = minValue(new_board, new_player, alpha, beta, depth+1, lastMove=None)
 
             if score > maxScore:
                 maxScore = score
@@ -123,7 +132,7 @@ def alphaBeta(board: np.ndarray, player: BoardPiece, depth: int
     """
     #Call minValue for the current player: minValue because alphaBeta
     #will be called in the iterativeDeepning search for the minimizing player
-    result = minValue(board, player, alpha=np.NINF, beta=np.inf, depth=depth)
+    result = minValue(board, player, alpha=np.NINF, beta=np.inf, depth=depth, lastMove=None)
     return result
 
 def iterativeDeepingSearch(board: np.ndarray, player: BoardPiece
@@ -140,7 +149,6 @@ def iterativeDeepingSearch(board: np.ndarray, player: BoardPiece
     """
 
     iter = MAX_DEPTH #sets cut-off depth for DFS: incrementally decreasing
-    score = 0
     bestScore = np.NINF
     tempBoard = board.copy()
     tempBestScore = bestScore
@@ -172,6 +180,7 @@ def iterativeDeepingSearch(board: np.ndarray, player: BoardPiece
             new_player = (player%2)+1
             score = alphaBeta(new_board, new_player, iter)
 
+
             if score > bestScore:
                 bestScore = score
                 tempBestScore = bestScore
@@ -187,7 +196,8 @@ def iterativeDeepingSearch(board: np.ndarray, player: BoardPiece
         #Check old and new bestScores are the same:
         if bestMoves != OrderedDict() and list(bestMoves.keys())[0] == list(new_bestMoves.keys())[0]:
 
-            #Merge moves with the same score:
+            #Merge moves with the same score: my guess is this will be important when the heuristic
+            #is such that it creates the same value a lot of the time and no computational concern otherwise
             new_bestMoves[list(bestMoves.keys())[0]] = bestMoves[list(bestMoves.keys())[0]] + \
                                                        new_bestMoves[list(new_bestMoves.keys())[0]]
 
@@ -208,24 +218,17 @@ def iterativeDeepingSearch(board: np.ndarray, player: BoardPiece
     keys, values = list(bestMoves.keys()), list(bestMoves.values())
     return keys, values
 
-
-
-def generate_move_alphaBeta(board: np.array):
-
+def generate_move_alphaBeta(board: np.array, player: BoardPiece, saved_state: Optional[SavedState]
+) -> Tuple[PlayerAction, Optional[SavedState]]:
         """
-        Generates the next move on the basis of traversal of game-tree
-        to MAX_DEPTH
-
-        :return:
-        TODO: Make this an iterative deepening search instead of DFS with cut-off
+        Generates next move
+        :param board: the initial board
+        :param player: the player
+        :return: an action
         """
-
-        raise NotImplemented
-
-
-
-
-
-
+        score, *action = iterativeDeepingSearch(board, player)
+        #Randomly select one of the moves:
+        move = np.random.choice(action[0][0]) #that's pretty ugly
+        return move, saved_state
 
 

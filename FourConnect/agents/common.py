@@ -27,12 +27,15 @@ GenMove = Callable[
 ]
 
 class GameState(Enum):
-    IS_WIN = 1
-    IS_DRAW = -1
+    IS_WIN = 1000
+    IS_DRAW = -10
+    IS_LOSS = -1000
     STILL_PLAYING = 0
 
 class SavedState:
     pass
+
+#TODO: Convert every to bitmap representation!!
 
 def initialize_game_state() -> np.ndarray:
     """
@@ -139,7 +142,6 @@ def connected_four(
     :param last_action: the last_action
     :return:
     """
-    #TODO: Improve the way the connected pieces are found -> bitmap?
 
     return connect_four.connected_four_iter(board, player, last_action)
 
@@ -159,11 +161,14 @@ def check_end_state(
     if connected_four(board, player):
         return GameState.IS_WIN
 
+    elif connected_four(board,(player%2)+1):
+        return GameState.IS_LOSS
+
     elif np.size(board[board == 0]) != 0:
         return GameState.STILL_PLAYING
 
-    else:
-        return GameState.IS_DRAW #no free cells remaining
+    else: #no free cells remaining
+        return GameState.IS_DRAW
 
 
 

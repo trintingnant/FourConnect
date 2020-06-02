@@ -22,7 +22,7 @@ def  evaluateGame(board: np.ndarray, player: BoardPiece, lastMove: Optional[Play
         colValue = (np.where(board==player, 1, 0)*colKernel).sum() - (np.where(board==opponent, 1, 0)*colKernel).sum()
         #rowValue = (np.where(board.T==player, 1, 0)*rowKernel).sum() - (np.where(board.T==opponent, 1, 0)*rowKernel).sum()
 
-        return .7*colValue
+        return colValue
 
     #Heuristic that biases playing into columns with lots of free positions:
     def sky_heuristic(board: np.ndarray, player: BoardPiece, lastMove: Optional[PlayerAction]) -> float:

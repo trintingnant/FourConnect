@@ -1,7 +1,7 @@
 import numpy as np
 from typing import Optional, Callable
 from agents.common import PlayerAction, BoardPiece, SavedState, GenMove
-from agents.agent_random import generate_move
+from agents.agent_mcts.mcts import generate_move as generate_move
 
 def user_move(board: np.ndarray, _player: BoardPiece, saved_state: Optional[SavedState]):
     action = PlayerAction(-1)

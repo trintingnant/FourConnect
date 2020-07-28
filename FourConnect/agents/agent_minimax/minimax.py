@@ -132,7 +132,6 @@ def maxValue(
 
             if maxScore >= beta:
                 return maxScore
-
             #TODO: Random pruning: with small probability, prune anyway
 
             else:
@@ -188,10 +187,6 @@ def iterativeDeepingSearch(board: np.ndarray, player: BoardPiece
     #TODO: add time-limit related while-loop wrap
 
     #Early in the game: play moves in the center columns:
-
-    if 42 - np.count_nonzero(board) < 3:
-        score, moves = [], [[3]]
-        return score, moves
 
     #if np.count_nonzero(board) in range(2)
     #Generate a list of the best moves for iteration to next level:
@@ -257,8 +252,12 @@ def generate_move_alphaBeta(board: np.array, player: BoardPiece, saved_state: Op
         :param player: the player
         :return: an action
         """
+        # Early in the game: play moves in the center columns:
+        if 42 - np.count_nonzero(board) < 5:
+            move = 3
+            return move, saved_state
+
         scores, actions = iterativeDeepingSearch(board, player)
-        print(actions)
         #Randomly select one of the moves:
         move = np.random.choice(actions[0]) #that's pretty ugly
         return move, saved_state

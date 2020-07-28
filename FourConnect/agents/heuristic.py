@@ -20,9 +20,9 @@ def  evaluateGame(board: np.ndarray, player: BoardPiece, lastMove: Optional[Play
     #Heuristic that biases agent toward playing up the middle columns:
     def kernel_heuristic(board: np.ndarray, player: BoardPiece) -> float:
         colValue = (np.where(board==player, 1, 0)*colKernel).sum() - (np.where(board==opponent, 1, 0)*colKernel).sum()
-        #rowValue = (np.where(board.T==player, 1, 0)*rowKernel).sum() - (np.where(board.T==opponent, 1, 0)*rowKernel).sum()
+        rowValue = (np.where(board.T==player, 1, 0)*rowKernel).sum() - (np.where(board.T==opponent, 1, 0)*rowKernel).sum()
 
-        return colValue
+        return .7*colValue + .3*colValue
 
     #Heuristic that biases playing into columns with lots of free positions:
     def sky_heuristic(board: np.ndarray, player: BoardPiece, lastMove: Optional[PlayerAction]) -> float:
@@ -46,14 +46,15 @@ def  evaluateGame(board: np.ndarray, player: BoardPiece, lastMove: Optional[Play
 
     #Heuristic that penalizes topping columns too early:
     def tooQuickheuristic(board: np.ndarray, player: BoardPiece) -> float:
-        if not np.count_nonzero(board)<=41:
-            return np.count_nonzero(board) * board[board==player].argmax(axis=0)
-        else:
+        if np.count_nonzero(board)==41:
             return 0
+        else:
+            return np.count_nonzero(board) * board[board==player].argmax(axis=0)
 
     #These aren't working spectacularly to be honest
 
     return kernel_heuristic(board, player)
+
 
 
 

@@ -27,9 +27,9 @@ GenMove = Callable[
 ]
 
 class GameState(Enum):
-    IS_WIN = 1000
+    IS_WIN = 100000
     IS_DRAW = -10
-    IS_LOSS = -1000
+    IS_LOSS = -100000
     STILL_PLAYING = 0
 
 class SavedState:

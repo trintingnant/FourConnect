@@ -6,13 +6,18 @@ from typing import Tuple, Optional
 from agents.common import BoardPiece, GameState, PLAYER1, PLAYER2, noPlayer, SavedState, PlayerAction
 from agents.common import check_end_state, apply_player_action, initialize_game_state, pretty_print_board
 from agents.heuristic import evaluateGame
+from agents.hashing import zobr_myhash_init, hash_board
 
 
 MAX_DEPTH: int = 6
 TIME_THRESHOLD: int = 2000
 timeOut: bool
 
-#TODO: Add automatic evaluation of GameState for runtims exceeding time limit
+global htable, transpoTable, transpo_size
+htable = zobr_myhash_init(initialize_game_state())
+transpoTable = OrderedDict()
+transpo_size = 50
+
 
 
 def minValue(
@@ -188,9 +193,6 @@ def iterativeDeepingSearch(board: np.ndarray, player: BoardPiece
 
     #Early in the game: play moves in the center columns:
 
-    #if np.count_nonzero(board) in range(2)
-    #Generate a list of the best moves for iteration to next level:
-
     while iter > 0:
 
         possible_moves = np.where(board[5] == noPlayer)
@@ -198,26 +200,40 @@ def iterativeDeepingSearch(board: np.ndarray, player: BoardPiece
         for moveI, move in np.ndenumerate(possible_moves):
 
             last_move = move
+            score = np.NINF
 
             bestScore = tempBestScore
 
             new_board = apply_player_action(tempBoard, move, player)
-            tempBoard = board.copy()
-            new_player = (player%2)+1
-            score = alphaBeta(new_board, new_player, iter, last_move)
+            #Check if new_board is in the transposition table:
+            hash_key = hash_board(new_board)
 
+            if transpoTable.get(hash_key) is not None:
+                score = transpoTable[hash_key]
+
+            else:
+                tempBoard = board.copy()
+                new_player = (player%2)+1
+                score = alphaBeta(new_board, new_player, iter, last_move)
 
             if score > bestScore:
                 bestScore = score
                 tempBestScore = bestScore
                 new_bestMoves.clear()
                 new_bestMoves[bestScore] = [move]
+                transpoTable[hash_key] = bestScore
+
+                # FIFO queue, pop item upon exceeding space limit
+                if len(list(transpoTable.keys())) > transpo_size:
+                    transpoTable.popitem()
 
 
             #store all moves with the same score:
             elif score == bestScore:
                 new_bestMoves[bestScore].append(move)
-                #print(iter, new_bestMoves)
+                transpoTable[hash_key] = bestScore
+                if len(list(transpoTable.keys())) > transpo_size:
+                    transpoTable.popitem()
 
         #Check old and new bestScores are the same:
         if bestMoves != OrderedDict() and list(bestMoves.keys())[0] == list(new_bestMoves.keys())[0]:
@@ -253,7 +269,7 @@ def generate_move_alphaBeta(board: np.array, player: BoardPiece, saved_state: Op
         :return: an action
         """
         # Early in the game: play moves in the center columns:
-        if 42 - np.count_nonzero(board) < 5:
+        if np.count_nonzero(board) < 2:
             move = 3
             return move, saved_state
 
